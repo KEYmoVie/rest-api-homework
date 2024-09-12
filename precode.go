@@ -55,7 +55,11 @@ func getTasks(w http.ResponseWriter, r *http.Request) {
 	// так как все успешно, то статус OK
 	w.WriteHeader(http.StatusOK)
 	// записываем сериализованные в JSON данные в тело ответа
-	w.Write(resp)
+	_, err = w.Write(resp)
+	if err != nil {
+		fmt.Printf("Ошибка записи сериализованных в JSON данных в ответ: %s", err.Error())
+		return
+	}
 }
 
 func postTasks(w http.ResponseWriter, r *http.Request) {
@@ -73,7 +77,10 @@ func postTasks(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tasks[task.ID] = task
+	_, ok := tasks[task.ID]
+	if !ok {
+		tasks[task.ID] = task
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
@@ -84,7 +91,7 @@ func getTask(w http.ResponseWriter, r *http.Request) {
 
 	task, ok := tasks[id]
 	if !ok {
-		http.Error(w, "Артист не найден", http.StatusNoContent)
+		http.Error(w, "", http.StatusBadRequest)
 		return
 	}
 
@@ -96,7 +103,11 @@ func getTask(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write(resp)
+	_, err = w.Write(resp)
+	if err != nil {
+		fmt.Printf("Ошибка записи сериализованных в JSON данных в ответ: %s", err.Error())
+		return
+	}
 }
 
 func delTask(w http.ResponseWriter, r *http.Request) {
@@ -104,19 +115,12 @@ func delTask(w http.ResponseWriter, r *http.Request) {
 
 	task, ok := tasks[id]
 	if !ok {
-		http.Error(w, "Артист не найден", http.StatusNoContent)
+		http.Error(w, "", http.StatusBadRequest)
 		return
 	}
 
 	delete(tasks, task.ID)
 
-	_, err := json.Marshal(task)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 }
 
